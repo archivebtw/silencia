@@ -1,0 +1,193 @@
+.window {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1000;
+  width: min(390px, calc(100vw - 32px));
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 20px;
+  background: rgba(14, 15, 20, .94);
+  box-shadow: 0 24px 80px rgba(0,0,0,.52), 0 0 0 1px rgba(141,124,255,.04) inset;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  animation: appear .22s ease-out;
+}
+
+.header {
+  min-height: 52px;
+  padding: 11px 12px 11px 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+
+.heading { min-width: 0; }
+.kicker {
+  display: block;
+  margin-bottom: 2px;
+  color: #8d929d;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+.heading strong {
+  display: block;
+  max-width: 245px;
+  overflow: hidden;
+  color: #f7f7f8;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headerActions { display: flex; gap: 6px; }
+.iconButton {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 9px;
+  background: rgba(255,255,255,.035);
+  color: #9da2ad;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.iconButton:hover { color: #fff; background: rgba(255,255,255,.08); }
+
+.body { padding: 14px; }
+.trackInfo {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 13px;
+  align-items: center;
+}
+.cover {
+  width: 68px;
+  height: 68px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: #1a1c22;
+}
+.coverPlaceholder {
+  display: grid;
+  place-items: center;
+  color: #a69cff;
+  background: linear-gradient(145deg, #242531, #15161b);
+}
+.meta { min-width: 0; }
+.meta h3 {
+  margin: 8px 0 3px;
+  overflow: hidden;
+  color: #fff;
+  font-size: 16px;
+  letter-spacing: -.025em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.meta p {
+  margin: 0;
+  overflow: hidden;
+  color: #858a95;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.progressRow {
+  display: grid;
+  grid-template-columns: 32px 1fr 32px;
+  gap: 8px;
+  align-items: center;
+  margin-top: 14px;
+}
+.time { color: #6f7480; font-size: 9px; text-align: center; }
+.range {
+  width: 100%;
+  height: 3px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 99px;
+  background: transparent;
+  accent-color: #a89cff;
+  cursor: pointer;
+  box-shadow: none;
+}
+.range:focus { box-shadow: none; }
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 11px;
+}
+.leftControls, .volume { display: flex; align-items: center; gap: 8px; }
+.playButton {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #f4f2ff;
+  color: #111217;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 28px rgba(141,124,255,.18);
+}
+.sourceButton {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 10px;
+  color: #9da2ad;
+  display: grid;
+  place-items: center;
+}
+.sourceButton:hover { color: #fff; background: rgba(255,255,255,.06); }
+.volume { color: #777c87; }
+.volume .range { width: 78px; }
+
+.embed {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-radius: 13px;
+  background: #08090b;
+}
+.embedBody { padding: 10px; }
+.fallback {
+  padding: 18px 14px;
+  color: #8d929d;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.fallback a { color: #c2b9ff; }
+
+.minimized .header { border-bottom: 0; }
+.minimized .body,
+.minimized .embedBody,
+.minimized .fallback { display: none; }
+.minimized { width: min(310px, calc(100vw - 32px)); }
+
+@keyframes appear {
+  from { opacity: 0; transform: translateY(10px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 680px) {
+  .window {
+    right: 12px;
+    bottom: 12px;
+    width: calc(100vw - 24px);
+    border-radius: 17px;
+  }
+  .minimized { width: calc(100vw - 24px); }
+  .volume .range { width: 56px; }
+}
