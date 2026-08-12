@@ -11,7 +11,7 @@ export function EmbedPlayer({ media }: { media: ParsedMedia | null }) {
         <div className="empty-icon"><Music2 size={28} /></div>
         <div>
           <strong>Здесь появится плеер</strong>
-          <p>Вставь ссылку Spotify или SoundCloud либо выбери трек из поиска Silencia.</p>
+          <p>Вставь ссылку Spotify, SoundCloud или YouTube либо выбери трек из поиска Silencia.</p>
         </div>
       </div>
     );
@@ -40,6 +40,8 @@ export function EmbedPlayer({ media }: { media: ParsedMedia | null }) {
   }
 
   if (media.playableInline && media.embedUrl) {
+    const height = media.provider === "soundcloud" ? 300 : media.provider === "youtube" ? 360 : 152;
+
     return (
       <div className="embed-card">
         <div className="embed-header">
@@ -52,12 +54,15 @@ export function EmbedPlayer({ media }: { media: ParsedMedia | null }) {
           </a>
         </div>
         <iframe
+          key={media.embedUrl}
           src={media.embedUrl}
           title={`${media.label} player`}
           width="100%"
-          height={media.provider === "soundcloud" ? 300 : 152}
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          height={height}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+          allowFullScreen
           loading="lazy"
+          referrerPolicy="strict-origin-when-cross-origin"
         />
       </div>
     );
