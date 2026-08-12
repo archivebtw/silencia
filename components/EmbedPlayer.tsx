@@ -20,17 +20,35 @@ export function EmbedPlayer({ media }: { media: ParsedMedia | null }) {
   if (media.audioUrl) {
     return (
       <div className="audio-card">
-        {media.cover ? <img className="audio-cover" src={media.cover} alt="" /> : <div className="audio-cover placeholder"><Music2 size={30} /></div>}
+        {media.cover ? (
+          <img className="audio-cover" src={media.cover} alt="" />
+        ) : (
+          <div className="audio-cover placeholder"><Music2 size={30} /></div>
+        )}
+
         <div className="audio-content">
           <div className="audio-topline">
             <ProviderBadge provider={media.provider} />
             {media.preview && <span className="preview-note">встроенное превью</span>}
           </div>
+
           <h3>{media.label}</h3>
           {media.subtitle && <p>{media.subtitle}</p>}
-          <div className="inline-playing-note">
-            <span className="online-dot" /> Трек играет прямо в Silencia — управление находится в нижнем плеере.
-          </div>
+
+          <audio
+            key={media.audioUrl}
+            controls
+            autoPlay
+            preload="auto"
+            src={media.audioUrl}
+          >
+            Браузер не поддерживает HTML5 Audio.
+          </audio>
+
+          <p className="audio-help">
+            Если браузер запретил автозапуск со звуком, нажми Play на панели выше.
+          </p>
+
           <a href={media.sourceUrl} target="_blank" rel="noreferrer" className="text-link">
             Открыть источник <ExternalLink size={14} />
           </a>
