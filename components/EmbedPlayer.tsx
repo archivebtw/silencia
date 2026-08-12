@@ -24,11 +24,13 @@ export function EmbedPlayer({ media }: { media: ParsedMedia | null }) {
         <div className="audio-content">
           <div className="audio-topline">
             <ProviderBadge provider={media.provider} />
-            {media.preview && <span className="preview-note">30-sec preview</span>}
+            {media.preview && <span className="preview-note">встроенное превью</span>}
           </div>
           <h3>{media.label}</h3>
           {media.subtitle && <p>{media.subtitle}</p>}
-          <audio key={media.audioUrl} controls autoPlay preload="metadata" src={media.audioUrl} />
+          <div className="inline-playing-note">
+            <span className="online-dot" /> Трек играет прямо в Silencia — управление находится в нижнем плеере.
+          </div>
           <a href={media.sourceUrl} target="_blank" rel="noreferrer" className="text-link">
             Открыть источник <ExternalLink size={14} />
           </a>
