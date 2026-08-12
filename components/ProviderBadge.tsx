@@ -6,6 +6,7 @@ const labels: Record<Provider, string> = {
   youtube: "YouTube",
   yandex: "Яндекс Музыка",
   apple: "Catalog preview",
+  musicbrainz: "MusicBrainz",
   unknown: "Ссылка"
 };
 
