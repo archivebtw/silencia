@@ -14,7 +14,7 @@ import {
   Search,
   Sparkles
 } from "lucide-react";
-import { EmbedPlayer } from "@/components/EmbedPlayer";
+import { FloatingNowPlaying } from "@/components/FloatingNowPlaying";
 import { ProviderBadge } from "@/components/ProviderBadge";
 import { parseMediaUrl, providerSearchLinks } from "@/lib/providers";
 import type { ParsedMedia, Track } from "@/lib/types";
@@ -49,7 +49,6 @@ export default function Home() {
     }
     setActiveMedia(parsed);
     setMessage("");
-    requestAnimationFrame(() => document.querySelector("#player")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
   async function searchTracks(event: FormEvent) {
@@ -89,7 +88,6 @@ export default function Home() {
       preview: true
     });
     setMessage("");
-    requestAnimationFrame(() => document.querySelector("#player")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
   return (
@@ -103,7 +101,7 @@ export default function Home() {
         <nav>
           <a className="nav-item active" href="#top"><Sparkles size={18} /> Главная</a>
           <a className="nav-item" href="#search"><Search size={18} /> Поиск</a>
-          <a className="nav-item" href="#player"><Headphones size={18} /> Плеер</a>
+          <button className="nav-item ghost" type="button"><Headphones size={18} /> Сейчас играет</button>
         </nav>
 
         <div className="sidebar-section">
@@ -139,7 +137,7 @@ export default function Home() {
           <form className="panel import-panel" onSubmit={importLink}>
             <div className="panel-title"><Link2 size={18} /> Быстрый импорт</div>
             <h2>Вставь ссылку на музыку</h2>
-            <p>Spotify, SoundCloud и YouTube откроются прямо внутри Silencia. Яндекс Музыка пока открывается через официальный источник.</p>
+            <p>Spotify, SoundCloud и YouTube откроются в плавающем окне «Сейчас играет». Яндекс Музыка пока открывается через официальный источник.</p>
             <div className="input-row">
               <input
                 value={link}
@@ -153,14 +151,14 @@ export default function Home() {
               <span className="source soundcloud">SC</span>
               <span className="source" style={{ background: "#ff0033" }}>YT</span>
               <span className="source yandex">Я</span>
-              <span className="muted">полное воспроизведение — если источник его разрешает</span>
+              <span className="muted">плеер остаётся на экране при прокрутке</span>
             </div>
           </form>
 
           <div className="panel stat-panel">
-            <span className="stat-kicker">OFFICIAL EMBEDS</span>
-            <strong>Full source player</strong>
-            <p>Silencia не скачивает защищённое аудио: трек играет через официальный плеер Spotify, SoundCloud или YouTube внутри нашей страницы.</p>
+            <span className="stat-kicker">NOW PLAYING WINDOW</span>
+            <strong>Always with you</strong>
+            <p>Запущенный трек остаётся в отдельном компактном окне поверх Silencia, пока ты продолжаешь искать музыку.</p>
             <div className="waveform" aria-hidden="true">
               {Array.from({ length: 24 }).map((_, i) => <i key={i} style={{ height: `${18 + ((i * 17) % 55)}%` }} />)}
             </div>
@@ -172,7 +170,7 @@ export default function Home() {
         <section className="search-section" id="search">
           <div className="section-heading">
             <div><span className="eyebrow">DISCOVER</span><h2>Найди трек</h2></div>
-            <span className="muted">Поиск даёт превью; полное воспроизведение — через импорт ссылки поддерживаемого источника</span>
+            <span className="muted">Нажми Play — окно «Сейчас играет» появится справа снизу</span>
           </div>
 
           <form className="search-box" onSubmit={searchTracks}>
@@ -218,7 +216,7 @@ export default function Home() {
                   <ProviderBadge provider={track.provider} />
                   <time>{formatDuration(track.durationMs)}</time>
                   <div className="track-actions">
-                    <button onClick={() => playTrack(track)} disabled={!track.previewUrl} title="Слушать превью"><Play size={15} /></button>
+                    <button onClick={() => playTrack(track)} disabled={!track.previewUrl} title="Слушать"><Play size={15} /></button>
                     <a href={links.youtube} target="_blank" rel="noreferrer" title="Найти полную версию на YouTube"><ExternalLink size={14} /></a>
                   </div>
                 </article>
@@ -226,15 +224,9 @@ export default function Home() {
             })}
           </div>
         </section>
-
-        <section className="player-section" id="player">
-          <div className="section-heading">
-            <div><span className="eyebrow">NOW PLAYING</span><h2>Silencia Player</h2></div>
-            <span className="muted">Spotify · SoundCloud · YouTube official embeds</span>
-          </div>
-          <EmbedPlayer media={activeMedia} />
-        </section>
       </section>
+
+      <FloatingNowPlaying media={activeMedia} onClose={() => setActiveMedia(null)} />
     </main>
   );
 }
