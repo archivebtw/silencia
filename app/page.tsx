@@ -66,7 +66,7 @@ export default function Home() {
       setTracks(data.tracks ?? []);
     } catch {
       setTracks([]);
-      setMessage("Поиск временно недоступен. При этом ссылки Spotify и SoundCloud продолжат работать без API-ключей.");
+      setMessage("Поиск временно недоступен. При этом ссылки Spotify, SoundCloud и YouTube продолжат работать без API-ключей.");
     } finally {
       setSearching(false);
     }
@@ -74,7 +74,7 @@ export default function Home() {
 
   function playTrack(track: Track) {
     if (!track.previewUrl) {
-      setMessage("Для этого результата каталог не отдал аудиопревью. Можно открыть трек в одном из сервисов справа.");
+      setMessage("Для этого результата каталог не отдал аудиопревью. Полную версию можно найти в одном из сервисов ниже и вставить ссылку в Silencia.");
       return;
     }
 
@@ -116,7 +116,7 @@ export default function Home() {
         <div className="sidebar-card">
           <span className="online-dot" />
           <strong>Без API-ключей</strong>
-          <p>Spotify · SoundCloud · Яндекс + открытый поиск</p>
+          <p>Spotify · SoundCloud · YouTube · Яндекс + открытый поиск</p>
         </div>
       </aside>
 
@@ -126,7 +126,7 @@ export default function Home() {
             <span className="eyebrow">ALL YOUR MUSIC · ONE PLACE</span>
             <h1>Музыка без<br /><span>границ.</span></h1>
             <p className="hero-copy">
-              Вставляй ссылки из музыкальных сервисов или просто напиши название трека и исполнителя. Никаких Spotify Developer ключей для запуска Silencia не требуется.
+              Вставляй ссылки из музыкальных сервисов или просто напиши название трека и исполнителя. Spotify, SoundCloud и YouTube могут играть прямо внутри Silencia через официальные плееры.
             </p>
           </div>
           <div className="profile-chip">
@@ -139,27 +139,28 @@ export default function Home() {
           <form className="panel import-panel" onSubmit={importLink}>
             <div className="panel-title"><Link2 size={18} /> Быстрый импорт</div>
             <h2>Вставь ссылку на музыку</h2>
-            <p>Spotify и SoundCloud откроются прямо внутри Silencia. Яндекс Музыка — через официальный источник.</p>
+            <p>Spotify, SoundCloud и YouTube откроются прямо внутри Silencia. Яндекс Музыка пока открывается через официальный источник.</p>
             <div className="input-row">
               <input
                 value={link}
                 onChange={(e) => setLink(e.target.value)}
-                placeholder="https://open.spotify.com/track/..."
+                placeholder="Spotify, SoundCloud или YouTube URL"
               />
               <button className="primary-button" type="submit">Открыть <ArrowRight size={18} /></button>
             </div>
             <div className="source-row">
               <span className="source spotify">S</span>
               <span className="source soundcloud">SC</span>
+              <span className="source" style={{ background: "#ff0033" }}>YT</span>
               <span className="source yandex">Я</span>
-              <span className="muted">без Client ID и Client Secret</span>
+              <span className="muted">полное воспроизведение — если источник его разрешает</span>
             </div>
           </form>
 
           <div className="panel stat-panel">
-            <span className="stat-kicker">NO-KEY ARCHITECTURE</span>
-            <strong>0 API secrets</strong>
-            <p>Импорт ссылок работает через официальные embeds, а обычный поиск — через открытый музыкальный каталог.</p>
+            <span className="stat-kicker">OFFICIAL EMBEDS</span>
+            <strong>Full source player</strong>
+            <p>Silencia не скачивает защищённое аудио: трек играет через официальный плеер Spotify, SoundCloud или YouTube внутри нашей страницы.</p>
             <div className="waveform" aria-hidden="true">
               {Array.from({ length: 24 }).map((_, i) => <i key={i} style={{ height: `${18 + ((i * 17) % 55)}%` }} />)}
             </div>
@@ -171,7 +172,7 @@ export default function Home() {
         <section className="search-section" id="search">
           <div className="section-heading">
             <div><span className="eyebrow">DISCOVER</span><h2>Найди трек</h2></div>
-            <span className="muted">Открытый поиск · встроенные 30-секундные превью · без регистрации разработчика</span>
+            <span className="muted">Поиск даёт превью; полное воспроизведение — через импорт ссылки поддерживаемого источника</span>
           </div>
 
           <form className="search-box" onSubmit={searchTracks}>
@@ -188,10 +189,11 @@ export default function Home() {
 
           {query.trim() && (
             <div className="external-searches">
-              <span>Полная версия в:</span>
+              <span>Найти полную версию:</span>
               <a href={providerLinks.spotify} target="_blank" rel="noreferrer">Spotify</a>
               <a href={providerLinks.soundcloud} target="_blank" rel="noreferrer">SoundCloud</a>
-              <a href={providerLinks.yandex} target="_blank" rel="noreferrer">Яндекс Музыке</a>
+              <a href={providerLinks.youtube} target="_blank" rel="noreferrer">YouTube</a>
+              <a href={providerLinks.yandex} target="_blank" rel="noreferrer">Яндекс Музыка</a>
               <a href={providerLinks.apple} target="_blank" rel="noreferrer">Apple Music</a>
             </div>
           )}
@@ -217,7 +219,7 @@ export default function Home() {
                   <time>{formatDuration(track.durationMs)}</time>
                   <div className="track-actions">
                     <button onClick={() => playTrack(track)} disabled={!track.previewUrl} title="Слушать превью"><Play size={15} /></button>
-                    <a href={links.spotify} target="_blank" rel="noreferrer" title="Найти в Spotify"><ExternalLink size={14} /></a>
+                    <a href={links.youtube} target="_blank" rel="noreferrer" title="Найти полную версию на YouTube"><ExternalLink size={14} /></a>
                   </div>
                 </article>
               );
@@ -228,7 +230,7 @@ export default function Home() {
         <section className="player-section" id="player">
           <div className="section-heading">
             <div><span className="eyebrow">NOW PLAYING</span><h2>Silencia Player</h2></div>
-            <span className="muted">Spotify/SoundCloud embed или каталог-превью</span>
+            <span className="muted">Spotify · SoundCloud · YouTube official embeds</span>
           </div>
           <EmbedPlayer media={activeMedia} />
         </section>
