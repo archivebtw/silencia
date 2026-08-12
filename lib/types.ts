@@ -1,4 +1,4 @@
-export type Provider = "spotify" | "soundcloud" | "yandex" | "apple" | "unknown";
+export type Provider = "spotify" | "soundcloud" | "youtube" | "yandex" | "apple" | "unknown";
 
 export type Track = {
   id: string;
