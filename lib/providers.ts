@@ -8,6 +8,25 @@ function safeUrl(input: string) {
   }
 }
 
+function getYouTubeVideoId(url: URL) {
+  const host = url.hostname.replace(/^www\./, "").toLowerCase();
+
+  if (host === "youtu.be") {
+    return url.pathname.split("/").filter(Boolean)[0] ?? null;
+  }
+
+  if (host === "youtube.com" || host === "m.youtube.com" || host === "music.youtube.com") {
+    if (url.pathname === "/watch") return url.searchParams.get("v");
+
+    const parts = url.pathname.split("/").filter(Boolean);
+    if (["shorts", "live", "embed"].includes(parts[0] ?? "")) {
+      return parts[1] ?? null;
+    }
+  }
+
+  return null;
+}
+
 export function parseMediaUrl(input: string): ParsedMedia | null {
   const url = safeUrl(input);
   if (!url) return null;
@@ -41,6 +60,17 @@ export function parseMediaUrl(input: string): ParsedMedia | null {
     };
   }
 
+  const youtubeId = getYouTubeVideoId(url);
+  if (youtubeId) {
+    return {
+      provider: "youtube",
+      sourceUrl: url.toString(),
+      embedUrl: `https://www.youtube-nocookie.com/embed/${youtubeId}?playsinline=1&rel=0`,
+      label: "YouTube",
+      playableInline: true
+    };
+  }
+
   if (host === "music.yandex.ru" || host === "music.yandex.com") {
     return {
       provider: "yandex",
@@ -64,6 +94,7 @@ export function providerSearchLinks(query: string) {
   return {
     spotify: `https://open.spotify.com/search/${q}`,
     soundcloud: `https://soundcloud.com/search/sounds?q=${q}`,
+    youtube: `https://www.youtube.com/results?search_query=${q}`,
     yandex: `https://music.yandex.ru/search?text=${q}`,
     apple: `https://music.apple.com/us/search?term=${q}`
   };
