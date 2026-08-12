@@ -29,6 +29,7 @@ type RankedTrack = Track & { rank: number };
 
 const APPLE_STOREFRONTS = ["US", "GB", "DE", "KZ", "RU"];
 const MAX_RESULTS = 140;
+const MIN_RELEVANCE = 1000;
 
 function normalize(value: string) {
   return value
@@ -39,22 +40,72 @@ function normalize(value: string) {
     .trim();
 }
 
+function compact(value: string) {
+  return normalize(value).replace(/\s+/g, "");
+}
+
+function splitAlphaNumeric(value: string) {
+  return value
+    .replace(/([\p{L}])([\p{N}])/gu, "$1 $2")
+    .replace(/([\p{N}])([\p{L}])/gu, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function dedupeKey(track: Track) {
-  return `${normalize(track.title)}::${normalize(track.artist)}`;
+  return `${compact(track.title)}::${compact(track.artist)}`;
 }
 
 function relevance(track: Track, query: string) {
   const q = normalize(query);
+  const qCompact = compact(query);
   const title = normalize(track.title);
   const artist = normalize(track.artist);
-  const combined = `${artist} ${title}`;
+  const combined = `${artist} ${title}`.trim();
+  const titleCompact = compact(track.title);
+  const artistCompact = compact(track.artist);
+  const combinedCompact = `${artistCompact}${titleCompact}`;
 
-  if (combined === q || title === q || artist === q) return 1000;
-  if (combined.includes(q)) return 850;
+  // Exact matches, while ignoring spaces/punctuation, are the strongest signal.
+  // This makes `FORTUNA812` match the artist `FORTUNA 812` exactly.
+  if (combinedCompact === qCompact) return 3400;
+  if (artistCompact === qCompact) return 3200;
+  if (titleCompact === qCompact) return 3000;
+
+  if (qCompact.length >= 4) {
+    if (artistCompact.includes(qCompact) || qCompact.includes(artistCompact)) return 2400;
+    if (titleCompact.includes(qCompact) || qCompact.includes(titleCompact)) return 2200;
+    if (combinedCompact.includes(qCompact)) return 2000;
+  }
 
   const tokens = q.split(" ").filter(Boolean);
-  const hits = tokens.filter((token) => combined.includes(token)).length;
-  return hits * 80;
+  if (tokens.length > 0) {
+    const hits = tokens.filter((token) => combined.includes(token)).length;
+    if (hits === tokens.length) return 1400;
+    if (tokens.length >= 3 && hits / tokens.length >= 0.8) return 1100;
+  }
+
+  return 0;
+}
+
+function escapeMusicBrainz(value: string) {
+  return value.replace(/([+\-&|!(){}\[\]^"~*?:\\/])/g, "\\$1");
+}
+
+function musicBrainzQuery(query: string) {
+  const variants = Array.from(new Set([query.trim(), splitAlphaNumeric(query)]))
+    .filter(Boolean)
+    .map(escapeMusicBrainz);
+
+  const clauses = variants.flatMap((variant) => [
+    `artist:\"${variant}\"`,
+    `recording:\"${variant}\"`
+  ]);
+
+  // Keep an ordinary query as a fallback for artist + title searches,
+  // but the local relevance filter below removes MusicBrainz fuzzy noise.
+  clauses.push(`\"${escapeMusicBrainz(query.trim())}\"`);
+  return `(${clauses.join(" OR ")})`;
 }
 
 async function searchApple(query: string): Promise<RankedTrack[]> {
@@ -77,29 +128,30 @@ async function searchApple(query: string): Promise<RankedTrack[]> {
     const data = (await response.json()) as { results?: ITunesSong[] };
     return (data.results ?? [])
       .filter((item) => item.trackId && item.trackName && item.artistName)
-      .map<RankedTrack>((item, index) => ({
-        id: `apple-${country}-${item.trackId}`,
-        title: item.trackName!,
-        artist: item.artistName!,
-        album: item.collectionName,
-        cover: item.artworkUrl100?.replace("100x100bb", "300x300bb"),
-        durationMs: item.trackTimeMillis,
-        url:
-          item.trackViewUrl ??
-          `https://music.apple.com/${country.toLowerCase()}/search?term=${encodeURIComponent(`${item.artistName} ${item.trackName}`)}`,
-        previewUrl: item.previewUrl,
-        provider: "apple",
-        rank: relevance(
-          {
-            id: "",
-            title: item.trackName!,
-            artist: item.artistName!,
-            url: "",
-            provider: "apple"
-          },
-          query
-        ) + 300 - storefrontIndex * 5 - index * 0.1
-      }));
+      .map<RankedTrack | null>((item, index) => {
+        const track: Track = {
+          id: `apple-${country}-${item.trackId}`,
+          title: item.trackName!,
+          artist: item.artistName!,
+          album: item.collectionName,
+          cover: item.artworkUrl100?.replace("100x100bb", "300x300bb"),
+          durationMs: item.trackTimeMillis,
+          url:
+            item.trackViewUrl ??
+            `https://music.apple.com/${country.toLowerCase()}/search?term=${encodeURIComponent(`${item.artistName} ${item.trackName}`)}`,
+          previewUrl: item.previewUrl,
+          provider: "apple"
+        };
+
+        const match = relevance(track, query);
+        if (match < MIN_RELEVANCE) return null;
+
+        return {
+          ...track,
+          rank: match + 350 - storefrontIndex * 5 - index * 0.1
+        };
+      })
+      .filter((track): track is RankedTrack => Boolean(track));
   });
 
   const settled = await Promise.allSettled(requests);
@@ -116,7 +168,7 @@ function musicBrainzArtist(recording: MusicBrainzRecording) {
 
 async function searchMusicBrainz(query: string): Promise<RankedTrack[]> {
   const endpoint = new URL("https://musicbrainz.org/ws/2/recording/");
-  endpoint.searchParams.set("query", query);
+  endpoint.searchParams.set("query", musicBrainzQuery(query));
   endpoint.searchParams.set("fmt", "json");
   endpoint.searchParams.set("limit", "100");
 
@@ -147,9 +199,12 @@ async function searchMusicBrainz(query: string): Promise<RankedTrack[]> {
         provider: "musicbrainz"
       };
 
+      const match = relevance(track, query);
+      if (match < MIN_RELEVANCE) return null;
+
       return {
         ...track,
-        rank: relevance(track, query) + Math.min(recording.score ?? 0, 100) - index * 0.05
+        rank: match + Math.min(recording.score ?? 0, 100) - index * 0.05
       };
     })
     .filter((track): track is RankedTrack => Boolean(track));
@@ -184,7 +239,7 @@ export async function GET(request: NextRequest) {
         continue;
       }
 
-      // Prefer a result that can actually be previewed in Silencia.
+      // If two catalogs describe the same song, keep the version Silencia can play.
       if (!existing.previewUrl && candidate.previewUrl) {
         unique.set(key, candidate);
       }
@@ -198,7 +253,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       tracks,
       total: unique.size,
-      sources: ["apple-multi-storefront", "musicbrainz"]
+      sources: ["apple-multi-storefront", "musicbrainz-relevance-filtered"]
     });
   } catch (error) {
     console.error("Silencia search error", error);
