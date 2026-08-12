@@ -3,6 +3,7 @@ import type { Provider } from "@/lib/types";
 const labels: Record<Provider, string> = {
   spotify: "Spotify",
   soundcloud: "SoundCloud",
+  youtube: "YouTube",
   yandex: "Яндекс Музыка",
   apple: "Catalog preview",
   unknown: "Ссылка"
